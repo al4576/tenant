@@ -64,6 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Event listener for starting drag on this ant (Mouse & Touch)
         antEl.addEventListener('mousedown', (e) => startDrag(e, antObj));
         antEl.addEventListener('touchstart', (e) => startDrag(e, antObj), { passive: false });
+        antEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
 
         antField.appendChild(antEl);
         ants.push(antObj);
