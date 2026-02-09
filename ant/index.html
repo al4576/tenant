@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed the Anteater</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="controls">
+            <button id="add-one-btn">Add 1 Ant</button>
+            <button id="add-ten-btn">Add 10 Ants</button>
+            <button id="theme-btn" aria-label="Toggle Dark Mode">☀️</button>
+            <div id="counter">Ants Eaten: <span id="count">0</span></div>
+        </div>
+        
+        <div id="anteater-zone">
+            <!-- Replace 'anteater.png' with your image file -->
+            <img id="anteater-img" src="anteater.png" alt="Hungry Anteater" draggable="false">
+        </div>
+
+        <div id="ant-field">
+            <!-- Ants will be spawned here -->
+        </div>
+    </div>
+
+    <!-- Audio element for the crunch sound -->
+    <!-- Replace 'crunch.mp3' with your audio file -->
+    <audio id="crunch-sound" src="mmm.m4a"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+:root {
+    --bg-color: #f0f4f8;
+    --text-color: #333;
+    --control-bg: rgba(255, 255, 255, 0.8);
+    --button-bg: #e0e0e0;
+    --button-hover: #d0d0d0;
+    --button-text: #333;
+}
+
+body.dark-mode {
+    --bg-color: #1a1a1a;
+    --text-color: #f0f0f0;
+    --control-bg: rgba(50, 50, 50, 0.8);
+    --button-bg: #444;
+    --button-hover: #555;
+    --button-text: #f0f0f0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden; /* Prevent scrolling when dragging */
+    user-select: none; /* Prevent text selection during drag */
+    transition: background-color 0.3s, color 0.3s;
+    touch-action: none; /* Prevent touch scrolling/zooming */
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#controls {
+    margin-top: 20px;
+    z-index: 100;
+    background: var(--control-bg);
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+/* Position theme button in corner */
+#theme-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    background: none;
+    border: none;
+    font-size: 24px;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s;
+    line-height: 1;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#theme-btn:hover {
+    background-color: rgba(0,0,0,0.1);
+    transform: scale(1.1);
+}
+
+body.dark-mode #theme-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+button {
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: 1px solid #ccc; 
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+body.dark-mode button {
+    border: 1px solid #666;
+}
+
+#counter {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+#anteater-zone {
+    margin-top: 20px;
+    position: relative;
+    z-index: 10;
+    pointer-events: none; /* Allow drops to be detected on coordinates, image is visual */
+}
+
+#anteater-img {
+    max-width: 400px;
+    max-height: 400px;
+    display: block;
+    /* Visual placeholder style until image is loaded */
+    min-width: 200px;
+    min-height: 200px;
+    transition: width 0.3s, height 0.3s;
+}
+
+/* Wobble Animation */
+@keyframes wobble {
+    0% { transform: rotate(0deg); }
+    15% { transform: rotate(-5deg) translateX(-5px); }
+    30% { transform: rotate(3deg) translateX(3px); }
+    45% { transform: rotate(-5deg) translateX(-5px); }
+    60% { transform: rotate(2deg) translateX(2px); }
+    75% { transform: rotate(-1deg) translateX(-1px); }
+    100% { transform: rotate(0deg); }
+}
+
+.wobble {
+    animation: wobble 0.8s ease-in-out;
+}
+
+#ant-field {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through to ants */
+    z-index: 20;
+}
+
+.ant {
+    position: absolute;
+    cursor: grab;
+    pointer-events: auto; /* Re-enable pointer events for ants */
+    transition: transform 0.1s;
+    user-select: none;
+    /* Center the transform origin for smoother dragging visually */
+    transform-origin: center center;
+    touch-action: none;
+}
+
+.ant.big {
+    font-size: 48px;
+}
+
+.ant.small {
+    font-size: 24px;
+}
+
+.ant.dragging {
+    cursor: grabbing;
+    opacity: 0.8;
+    z-index: 1000; /* Bring to front while dragging */
+}
+
+.ant.selected {
+    filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.8)); /* Highlight selected ants */
+}
+
+/* Mobile Friendly Adjustments */
+@media (max-width: 768px) {
+    #controls {
+        padding: 5px 10px;
+        gap: 10px;
+        width: 90%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    button {
+        padding: 10px 14px; /* Larger touch targets */
+        font-size: 14px;
+    }
+
+    #anteater-img {
+        max-width: 80vw;
+        max-height: 35vh;
+        min-width: 150px;
+        min-height: 150px;
+    }
+    
+    #theme-btn {
+        top: 10px;
+        right: 10px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .ant.big {
+        font-size: 40px;
+    }
+    
+    .ant.small {
+        font-size: 28px; /* Bigger small ants for touch */
+    }
+}
