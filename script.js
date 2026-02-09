@@ -13,15 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let antsEatenSinceWobble = 0;
     let wobbleTarget = getRandomWobbleTarget(); // Initialize with random target
 
-    // Helper for random wobble target between 3 and 10
+    // Helper for random wobble target between 4 and 17
     function getRandomWobbleTarget() {
-        return Math.floor(Math.random() * (10 - 3 + 1)) + 3;
+        return Math.floor(Math.random() * (17 - 4 + 1)) + 4;
     }
 
     // Dragging state
     let isDragging = false;
     let dragStartPos = { x: 0, y: 0 };
     let selectedAnts = []; // Array of ant objects currently being dragged
+    let longPressTimer = null;
+
 
     // --- Spawning Logic ---
 
@@ -127,6 +129,30 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedAnts = [...ants];
         } else {
             selectedAnts = [targetAnt];
+
+            // Setup Long Press for Mobile (or Desktop) to select all
+            if (longPressTimer) clearTimeout(longPressTimer);
+            longPressTimer = setTimeout(() => {
+                if (isDragging) {
+                    selectedAnts = [...ants];
+                    // Cluster all ants to the target ant's position
+                    selectedAnts.forEach(ant => {
+                        if (ant !== targetAnt) {
+                            // Move to targetAnt pos with small jitter
+                            ant.x = targetAnt.x + (Math.random() * 20 - 10);
+                            ant.y = targetAnt.y + (Math.random() * 20 - 10);
+                            ant.element.style.left = `${ant.x}px`;
+                            ant.element.style.top = `${ant.y}px`;
+                        }
+                    });
+
+                    selectedAnts.forEach(ant => {
+                        ant.element.classList.add('dragging');
+                        ant.element.classList.add('selected');
+                    });
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }
+            }, 600); // 600ms hold
         }
 
         // Add visual feedback
@@ -152,6 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const dx = pos.x - dragStartPos.x;
         const dy = pos.y - dragStartPos.y;
 
+        // If moved significantly, cancel long press
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        }
+
         // Move all selected ants by the delta
         selectedAnts.forEach(ant => {
             const newX = ant.x + dx;
@@ -168,6 +202,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function onDragEnd(e) {
         if (!isDragging) return;
+
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
 
         isDragging = false;
         
