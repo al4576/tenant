@@ -6,12 +6,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const anteaterImg = document.getElementById('anteater-img');
     const countDisplay = document.getElementById('count');
     const crunchSound = document.getElementById('crunch-sound');
+    const saveScoreBtn = document.getElementById('save-score-btn');
+    const leaderboardList = document.getElementById('leaderboard-list');
 
     let eatenCount = 0;
     let ants = []; // Array to store ant data: { id, element, x, y }
     let nextId = 0;
     let antsEatenSinceWobble = 0;
     let wobbleTarget = getRandomWobbleTarget(); // Initialize with random target
+
+    // Generate or retrieve session ID (unique per tab)
+    let sessionId = sessionStorage.getItem('sessionId');
+    if (!sessionId) {
+        sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        sessionStorage.setItem('sessionId', sessionId);
+    }
 
     // Helper for random wobble target between 4 and 17
     function getRandomWobbleTarget() {
@@ -83,13 +92,126 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeBtn.textContent = '🌙';
+    } else {
+        document.body.classList.remove('dark-mode');
+        themeBtn.textContent = '☀️';
+    }
+
     themeBtn.addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         // Toggle icon based on mode
         if (document.body.classList.contains('dark-mode')) {
             themeBtn.textContent = '🌙';
+            localStorage.setItem('theme', 'dark');
         } else {
             themeBtn.textContent = '☀️';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+    // --- Leaderboard Logic ---
+
+    function getLeaderboard() {
+        const leaderboard = localStorage.getItem('leaderboard');
+        return leaderboard ? JSON.parse(leaderboard) : [];
+    }
+
+    function saveLeaderboard(leaderboard) {
+        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    }
+
+    function addScore(name, score) {
+        let leaderboard = getLeaderboard();
+        
+        // Check if this session already has an entry
+        const existingIndex = leaderboard.findIndex(entry => entry.sessionId === sessionId);
+        
+        if (existingIndex !== -1) {
+            // Session exists - update the entry only if new score is higher
+            if (score > leaderboard[existingIndex].score) {
+                leaderboard[existingIndex].name = name;
+                leaderboard[existingIndex].score = score;
+                leaderboard[existingIndex].date = new Date().toISOString();
+            } else {
+                // Keep existing higher score
+                return leaderboard;
+            }
+        } else {
+            // New session - add to the leaderboard
+            leaderboard.push({ name, score, sessionId, date: new Date().toISOString() });
+        }
+        
+        // Sort by score (descending) and keep only top 5
+        leaderboard.sort((a, b) => b.score - a.score);
+        const top5 = leaderboard.slice(0, 5);
+        saveLeaderboard(top5);
+        return top5;
+    }
+
+    function displayLeaderboard() {
+        const leaderboard = getLeaderboard();
+        leaderboardList.innerHTML = '';
+
+        if (leaderboard.length === 0) {
+            leaderboardList.innerHTML = '<div class="leaderboard-empty">No scores yet</div>';
+            return;
+        }
+
+        leaderboard.forEach((entry, index) => {
+            const rank = index + 1;
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'leaderboard-entry';
+            
+            const rankSpan = document.createElement('span');
+            rankSpan.className = 'leaderboard-rank';
+            rankSpan.textContent = `${rank}.`;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'leaderboard-name';
+            nameSpan.textContent = entry.name;
+            
+            const scoreSpan = document.createElement('span');
+            scoreSpan.className = 'leaderboard-score';
+            scoreSpan.textContent = entry.score;
+            
+            entryDiv.appendChild(rankSpan);
+            entryDiv.appendChild(nameSpan);
+            entryDiv.appendChild(scoreSpan);
+            
+            leaderboardList.appendChild(entryDiv);
+        });
+    }
+
+    // Display leaderboard on page load
+    displayLeaderboard();
+
+    saveScoreBtn.addEventListener('click', () => {
+        if (eatenCount === 0) {
+            alert('You need to eat at least one ant first!');
+            return;
+        }
+
+        const name = prompt('Enter your name for the leaderboard:');
+        if (name && name.trim()) {
+            const leaderboard = getLeaderboard();
+            const existing = leaderboard.find(entry => entry.sessionId === sessionId);
+            
+            if (existing && eatenCount <= existing.score) {
+                alert(`You already have a higher score of ${existing.score}.`);
+            } else if (existing) {
+                addScore(name.trim(), eatenCount);
+                alert(`Score updated. New record: ${eatenCount} ants (previous: ${existing.score})`);
+                displayLeaderboard();
+            } else {
+                addScore(name.trim(), eatenCount);
+                alert(`Score saved. You ate ${eatenCount} ants.`);
+                displayLeaderboard();
+            }
         }
     });
 
