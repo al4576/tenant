@@ -1,0 +1,5 @@
+# Firebase config (keep private)
+firebase-config.js
+
+# System files
+.DS_Store

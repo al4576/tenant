@@ -114,55 +114,118 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Leaderboard Logic ---
+    // --- Firebase Leaderboard Logic ---
 
-    function getLeaderboard() {
-        const leaderboard = localStorage.getItem('leaderboard');
-        return leaderboard ? JSON.parse(leaderboard) : [];
-    }
-
-    function saveLeaderboard(leaderboard) {
-        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    // Initialize Firebase
+    let database;
+    let leaderboardRef;
+    
+    try {
+        if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            leaderboardRef = database.ref('leaderboard');
+            
+            // Listen for real-time updates
+            leaderboardRef.on('value', (snapshot) => {
+                displayLeaderboard(snapshot.val());
+            });
+        } else {
+            console.warn('Firebase not configured. Using localStorage fallback.');
+            displayLeaderboard();
+        }
+    } catch (error) {
+        console.error('❌ Firebase initialization failed:', error);
+        console.warn('Using localStorage fallback.');
+        displayLeaderboard();
     }
 
     function addScore(name, score) {
-        let leaderboard = getLeaderboard();
         
-        // Check if this session already has an entry
-        const existingIndex = leaderboard.findIndex(entry => entry.sessionId === sessionId);
-        
-        if (existingIndex !== -1) {
-            // Session exists - update the entry only if new score is higher
-            if (score > leaderboard[existingIndex].score) {
-                leaderboard[existingIndex].name = name;
-                leaderboard[existingIndex].score = score;
-                leaderboard[existingIndex].date = new Date().toISOString();
-            } else {
-                // Keep existing higher score
-                return leaderboard;
-            }
-        } else {
-            // New session - add to the leaderboard
-            leaderboard.push({ name, score, sessionId, date: new Date().toISOString() });
+        if (!database) {
+            // Fallback to localStorage if Firebase not available
+            addScoreLocal(name, score);
+            return;
         }
-        
-        // Sort by score (descending) and keep only top 5
-        leaderboard.sort((a, b) => b.score - a.score);
-        const top5 = leaderboard.slice(0, 5);
-        saveLeaderboard(top5);
-        return top5;
+
+        // Get all entries
+        leaderboardRef.once('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            const entries = Object.entries(data).map(([key, value]) => ({ key, ...value }));
+            
+            // Check if this session already has an entry
+            const existing = entries.find(entry => entry.sessionId === sessionId);
+            
+            if (existing) {
+                // Session exists - update only if new score is higher
+                if (score > existing.score) {
+                    leaderboardRef.child(existing.key).update({
+                        name: name,
+                        score: score,
+                        date: new Date().toISOString()
+                    }).then(() => {
+                        console.log('Score updated successfully!');
+                    }).catch(err => {
+                        console.error('Error updating score:', err);
+                    });
+                } else {
+                    console.log('New score not higher than existing, skipping update');
+                }
+            } else {
+                // New session - add to leaderboard
+                console.log('Adding new entry to leaderboard...');
+                leaderboardRef.push({
+                    name: name,
+                    score: score,
+                    sessionId: sessionId,
+                    date: new Date().toISOString()
+                }).then(() => {
+                    console.log('Score added successfully!');
+                }).catch(err => {
+                    console.error('Error adding score:', err);
+                });
+            }
+            
+            // Clean up - keep only top 5
+            cleanupLeaderboard();
+        }).catch(err => {
+            console.error('Error fetching leaderboard:', err);
+        });
     }
 
-    function displayLeaderboard() {
-        const leaderboard = getLeaderboard();
+    function cleanupLeaderboard() {
+        console.log('🧹 Cleaning up leaderboard (keeping top 5)...');
+        leaderboardRef.once('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            const entries = Object.entries(data).map(([key, value]) => ({ key, ...value }));
+            
+            // Sort by score descending
+            entries.sort((a, b) => b.score - a.score);
+            
+            // Remove entries beyond top 5
+            if (entries.length > 5) {
+                entries.slice(5).forEach(entry => {
+                    leaderboardRef.child(entry.key).remove();
+                });
+            } else {
+            }
+        });
+    }
+
+    function displayLeaderboard(data) {
         leaderboardList.innerHTML = '';
 
-        if (leaderboard.length === 0) {
+        if (!data || Object.keys(data).length === 0) {
             leaderboardList.innerHTML = '<div class="leaderboard-empty">No scores yet</div>';
             return;
         }
 
-        leaderboard.forEach((entry, index) => {
+        // Convert object to array and sort
+        const entries = Object.values(data);
+        entries.sort((a, b) => b.score - a.score);
+        const top5 = entries.slice(0, 5);
+
+        top5.forEach((entry, index) => {
             const rank = index + 1;
             const entryDiv = document.createElement('div');
             entryDiv.className = 'leaderboard-entry';
@@ -187,8 +250,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Display leaderboard on page load
-    displayLeaderboard();
+    // LocalStorage fallback functions
+    function addScoreLocal(name, score) {
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+        
+        const existingIndex = leaderboard.findIndex(entry => entry.sessionId === sessionId);
+        
+        if (existingIndex !== -1) {
+            if (score > leaderboard[existingIndex].score) {
+                leaderboard[existingIndex].name = name;
+                leaderboard[existingIndex].score = score;
+                leaderboard[existingIndex].date = new Date().toISOString();
+            }
+        } else {
+            leaderboard.push({ name, score, sessionId, date: new Date().toISOString() });
+        }
+        
+        leaderboard.sort((a, b) => b.score - a.score);
+        const top5 = leaderboard.slice(0, 5);
+        localStorage.setItem('leaderboard', JSON.stringify(top5));
+        displayLeaderboard(top5.reduce((acc, entry, i) => ({ ...acc, [i]: entry }), {}));
+    }
 
     saveScoreBtn.addEventListener('click', () => {
         if (eatenCount === 0) {
@@ -198,20 +280,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const name = prompt('Enter your name for the leaderboard:');
         if (name && name.trim()) {
-            const leaderboard = getLeaderboard();
-            const existing = leaderboard.find(entry => entry.sessionId === sessionId);
-            
-            if (existing && eatenCount <= existing.score) {
-                alert(`You already have a higher score of ${existing.score}.`);
-            } else if (existing) {
-                addScore(name.trim(), eatenCount);
-                alert(`Score updated. New record: ${eatenCount} ants (previous: ${existing.score})`);
-                displayLeaderboard();
-            } else {
-                addScore(name.trim(), eatenCount);
-                alert(`Score saved. You ate ${eatenCount} ants.`);
-                displayLeaderboard();
+            if (!database) {
+                // Fallback to localStorage
+                addScoreLocal(name.trim(), eatenCount);
+                alert(`Score saved! You ate ${eatenCount} ants.`);
+                return;
             }
+
+            // Check if session already has a score
+            leaderboardRef.once('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                const entries = Object.values(data);
+                const existing = entries.find(entry => entry.sessionId === sessionId);
+                
+                if (existing && eatenCount <= existing.score) {
+                    alert(`You already have a higher score of ${existing.score}.`);
+                } else if (existing) {
+                    addScore(name.trim(), eatenCount);
+                    alert(`Score updated! New record: ${eatenCount} ants (previous: ${existing.score})`);
+                } else {
+                    addScore(name.trim(), eatenCount);
+                    alert(`Score saved! You ate ${eatenCount} ants.`);
+                }
+            });
         }
     });
 
