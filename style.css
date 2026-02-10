@@ -37,23 +37,37 @@ body {
     align-items: center;
 }
 
+#top-bar {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    max-width: 1400px;
+    padding: 20px 15px 0 15px;
+    z-index: 100;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
 #controls {
-    margin-top: 20px;
     z-index: 100;
     background: var(--control-bg);
-    padding: 10px 20px;
+    padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     display: flex;
+    flex-direction: row;
     gap: 15px;
     align-items: center;
     transition: background-color 0.3s;
+    flex-shrink: 0;
 }
 
-/* Position theme button in corner */
+/* Position theme button in corner - fixed at top right */
 #theme-btn {
-    position: absolute;
-    bottom: 20px;
+    position: fixed;
+    top: 20px;
     right: 20px;
     z-index: 2000; /* Higher than dragging ants to ensure visibility */
     background: rgba(255, 255, 255, 0.9);
@@ -109,6 +123,9 @@ body.dark-mode button {
     font-size: 18px;
     font-weight: bold;
     color: var(--text-color);
+    text-align: center;
+    padding: 8px 16px;
+    white-space: nowrap;
 }
 
 #anteater-zone {
@@ -190,16 +207,60 @@ body.dark-mode button {
 
 /* Mobile Friendly Adjustments */
 @media (max-width: 768px) {
+    #top-bar {
+        padding: 10px 10px 0 10px;
+        gap: 8px;
+        flex-wrap: nowrap;
+        align-items: stretch;
+    }
+    
+    #leaderboard-sidebar {
+        padding: 10px;
+        min-width: 130px;
+        max-width: 150px;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    
+    #leaderboard-sidebar h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .leaderboard-entry {
+        font-size: 12px;
+        padding: 3px 0;
+        gap: 6px;
+    }
+    
+    .leaderboard-rank {
+        min-width: 18px;
+    }
+    
+    .leaderboard-score {
+        font-size: 12px;
+    }
+    
     #controls {
-        padding: 5px 10px;
-        gap: 10px;
-        width: 90%;
-        justify-content: center;
-        flex-wrap: wrap;
+        padding: 8px 12px;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #controls button {
+        width: 100%;
+    }
+    
+    #counter {
+        font-size: 15px;
+        padding: 6px;
     }
 
     button {
-        padding: 10px 14px; /* Larger touch targets */
+        padding: 10px 12px; /* Larger touch targets */
         font-size: 14px;
     }
 
@@ -211,12 +272,12 @@ body.dark-mode button {
     }
     
     #theme-btn {
-        bottom: 10px;
+        top: 10px;
         right: 10px;
         padding: 8px;
         font-size: 20px;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
     }
     
     .ant.big {
@@ -230,16 +291,14 @@ body.dark-mode button {
 
 /* Leaderboard Sidebar */
 #leaderboard-sidebar {
-    position: fixed;
-    left: 20px;
-    top: 20px;
     background: var(--control-bg);
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     z-index: 100;
-    min-width: 200px;
+    min-width: 180px;
     max-width: 250px;
+    flex-shrink: 0;
 }
 
 #leaderboard-sidebar h3 {
@@ -286,25 +345,86 @@ body.dark-mode button {
     opacity: 0.6;
 }
 
-@media (max-width: 768px) {
+/* Extra small screens - compact layout */
+@media (max-width: 480px) {
+    #top-bar {
+        padding: 8px 8px 0 8px;
+        gap: 6px;
+    }
+    
     #leaderboard-sidebar {
-        left: 5px;
-        top: 80px; /* Move below controls */
         padding: 8px;
-        min-width: 120px;
-        max-width: 140px;
-        font-size: 11px;
+        min-width: 110px;
+        max-width: 130px;
     }
     
     #leaderboard-sidebar h3 {
         font-size: 12px;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
     
     .leaderboard-entry {
         font-size: 11px;
         padding: 2px 0;
-        gap: 5px;
+    }
+    
+    .leaderboard-score {
+        font-size: 11px;
+    }
+    
+    #controls {
+        padding: 6px 10px;
+        gap: 6px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #controls button {
+        width: 100%;
+    }
+    
+    button {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    #counter {
+        font-size: 14px;
+        padding: 5px;
+    }
+    
+    #theme-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+}
+
+/* Landscape orientation on mobile - compact everything */
+@media (max-height: 500px) and (orientation: landscape) {
+    #top-bar {
+        padding: 5px 8px 0 8px;
+        gap: 6px;
+        max-height: 30vh;
+    }
+    
+    #leaderboard-sidebar {
+        padding: 5px 8px;
+        min-width: 100px;
+        max-width: 120px;
+        max-height: 25vh;
+        overflow-y: auto;
+    }
+    
+    #leaderboard-sidebar h3 {
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+    
+    .leaderboard-entry {
+        font-size: 10px;
+        padding: 1px 0;
+        gap: 4px;
     }
     
     .leaderboard-rank {
@@ -312,6 +432,44 @@ body.dark-mode button {
     }
     
     .leaderboard-score {
+        font-size: 10px;
+    }
+    
+    #controls {
+        padding: 5px 8px;
+        gap: 5px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-height: 25vh;
+    }
+    
+    #controls button {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 70px;
+        padding: 6px 10px;
         font-size: 11px;
+    }
+    
+    #counter {
+        font-size: 12px;
+        padding: 6px 10px;
+        width: 100%;
+        flex: 1 1 100%;
+    }
+    
+    #theme-btn {
+        top: 5px;
+        right: 5px;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    #anteater-img {
+        max-width: 70vw;
+        max-height: 50vh;
+        min-width: 120px;
+        min-height: 120px;
     }
 }

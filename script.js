@@ -122,93 +122,79 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
         if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
-            console.log('🔥 Initializing Firebase...');
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             leaderboardRef = database.ref('leaderboard');
-            console.log('✅ Firebase initialized successfully!');
-            console.log('📊 Database URL:', firebaseConfig.databaseURL);
             
             // Listen for real-time updates
-            console.log('👂 Setting up real-time listener...');
             leaderboardRef.on('value', (snapshot) => {
-                console.log('📥 Leaderboard data received:', snapshot.val());
                 displayLeaderboard(snapshot.val());
             }, (error) => {
-                console.error('❌ Error listening to leaderboard:', error);
+                console.error('Error listening to leaderboard:', error);
             });
-            console.log('✅ Listener attached successfully!');
         } else {
             console.warn('Firebase not configured. Using localStorage fallback.');
             displayLeaderboard();
         }
     } catch (error) {
-        console.error('❌ Firebase initialization failed:', error);
         console.warn('Using localStorage fallback.');
         displayLeaderboard();
     }
 
     function addScore(name, score) {
-        console.log('💾 addScore called:', { name, score, sessionId });
         
         if (!database) {
-            console.log('⚠️ No database, using localStorage fallback');
             // Fallback to localStorage if Firebase not available
             addScoreLocal(name, score);
             return;
         }
 
-        console.log('🔄 Fetching current leaderboard data...');
         // Get all entries
         leaderboardRef.once('value', (snapshot) => {
             const data = snapshot.val() || {};
-            console.log('📊 Current leaderboard data:', data);
             const entries = Object.entries(data).map(([key, value]) => ({ key, ...value }));
             
             // Check if this session already has an entry
             const existing = entries.find(entry => entry.sessionId === sessionId);
-            console.log('🔍 Existing entry for this session:', existing);
             
             if (existing) {
                 // Session exists - update only if new score is higher
                 if (score > existing.score) {
-                    console.log('📝 Updating existing entry...');
                     leaderboardRef.child(existing.key).update({
                         name: name,
                         score: score,
                         date: new Date().toISOString()
                     }).then(() => {
-                        console.log('✅ Score updated successfully!');
+                        console.log('Score updated successfully!');
                     }).catch(err => {
-                        console.error('❌ Error updating score:', err);
+                        console.error('Error updating score:', err);
                     });
                 } else {
-                    console.log('⏭️ New score not higher than existing, skipping update');
+                    console.log('New score not higher than existing, skipping update');
                 }
             } else {
                 // New session - add to leaderboard
-                console.log('➕ Adding new entry to leaderboard...');
+                console.log('Adding new entry to leaderboard...');
                 leaderboardRef.push({
                     name: name,
                     score: score,
                     sessionId: sessionId,
                     date: new Date().toISOString()
                 }).then(() => {
-                    console.log('✅ Score added successfully!');
+                    console.log('Score added successfully!');
                 }).catch(err => {
-                    console.error('❌ Error adding score:', err);
+                    console.error('Error adding score:', err);
                 });
             }
             
             // Clean up - keep only top 5
             cleanupLeaderboard();
         }).catch(err => {
-            console.error('❌ Error fetching leaderboard:', err);
+            console.error('Error fetching leaderboard:', err);
         });
     }
 
     function cleanupLeaderboard() {
-        console.log('🧹 Cleaning up leaderboard (keeping top 5)...');
         leaderboardRef.once('value', (snapshot) => {
             const data = snapshot.val() || {};
             const entries = Object.entries(data).map(([key, value]) => ({ key, ...value }));

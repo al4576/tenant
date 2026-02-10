@@ -8,19 +8,23 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="leaderboard-sidebar">
-            <h3>Top 5</h3>
-            <div id="leaderboard-list">
-                <!-- Leaderboard entries will be inserted here -->
+        <!-- Theme toggle button - fixed position -->
+        <button id="theme-btn" aria-label="Toggle Dark Mode">☀️</button>
+        
+        <div id="top-bar">
+            <div id="leaderboard-sidebar">
+                <h3>Top 5</h3>
+                <div id="leaderboard-list">
+                    <!-- Leaderboard entries will be inserted here -->
+                </div>
             </div>
-        </div>
 
-        <div id="controls">
-            <button id="add-one-btn">Add 1 Ant</button>
-            <button id="add-ten-btn">Add 10 Ants</button>
-            <button id="theme-btn" aria-label="Toggle Dark Mode">☀️</button>
-            <div id="counter">Ants Eaten: <span id="count">0</span></div>
-            <button id="save-score-btn">Save Score</button>
+            <div id="controls">
+                <button id="add-one-btn">Add 1 Ant</button>
+                <button id="add-ten-btn">Add 10 Ants</button>
+                <button id="save-score-btn">Save Score</button>
+                <div id="counter">Ants Eaten: <span id="count">0</span></div>
+            </div>
         </div>
         
         <div id="anteater-zone">
